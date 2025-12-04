@@ -9,7 +9,7 @@ FROM alpine:latest
 RUN apk add --no-cache dante-server
 
 # -------------------------------------------------
-# 3️⃣  Default credentials (can be overridden in Render)
+# 3️⃣  Default credentials (override in Render → Environment)
 # -------------------------------------------------
 ENV SOCKS_USER=user
 ENV SOCKS_PASS=password
@@ -17,20 +17,22 @@ ENV SOCKS_PASS=password
 # -------------------------------------------------
 # 4️⃣  Write the Dante configuration file
 # -------------------------------------------------
+# All the lines between <><>'EOF' and EOF belong to the same RUN
+# command, so Docker does NOT try to parse them as instructions.
 RUN mkdir -p /etc/dante && \
-    cat > /etc/dante/sockd.conf <><>'EOF'
+    cat <><>'EOF' > /etc/dante/sockd.conf && \
 logoutput: stderr
-internal: 0.0.0.0 port = $$PORT   # Render injects PORT at runtime; $$ escapes it for build time
+internal: 0.0.0.0 port = 1080          # Render will map its $PORT to this value
 external: eth0
 
-# allow any client to connect (you can tighten this later)
+# Allow any client to connect – you can tighten this later
 client pass {
     from: 0.0.0.0/0 to: 0.0.0.0/0
     log: connect disconnect error
 }
 
 # -------------------------------------------------
-# Authentication rule – username / password
+# Authentication – username / password
 # -------------------------------------------------
 pass {
     from: 0.0.0.0/0 to: 0.0.0.0/0
@@ -42,7 +44,7 @@ pass {
 EOF
 
 # -------------------------------------------------
-# 5️⃣  Expose the (default) port – just for readability
+# 5️⃣  Expose the port (for readability; Render now uses $PORT)
 # -------------------------------------------------
 EXPOSE 1080
 
