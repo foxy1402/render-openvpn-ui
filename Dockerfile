@@ -8,5 +8,7 @@ RUN chmod +x /health-server.sh
 
 EXPOSE 8080
 
-# Find and run tgdante2 - it's already in the base image
-CMD ["/bin/sh", "-c", "exec /home/user/tgdante2 -l 0.0.0.0:8080 || exec tgdante2 -l 0.0.0.0:8080 || exec /app/tgdante2 -l 0.0.0.0:8080"]
+# The tgdante2 image likely uses tgdante2 as the entrypoint
+# We'll override it to listen on port 8080
+ENTRYPOINT ["tgdante2"]
+CMD ["-l", "0.0.0.0:8080"]
