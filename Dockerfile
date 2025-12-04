@@ -1,11 +1,9 @@
-FROM schors/tgdante2:latest
+FROM tinyproxy/tinyproxy:latest
 
-RUN apk add --no-cache netcat-openbsd bash
+RUN mkdir -p /etc/tinyproxy
 
-COPY health-server.sh /health-server.sh
-RUN chmod +x /health-server.sh
+COPY tinyproxy.conf /etc/tinyproxy/tinyproxy.conf
 
 EXPOSE 8080
 
-# Run tgdante2 as HTTP proxy on 8080 (not SOCKS5)
-CMD ["/bin/sh", "-c", "tgdante2 -l 0.0.0.0:8080 -protocol http"]
+CMD ["tinyproxy", "-d", "-c", "/etc/tinyproxy/tinyproxy.conf"]
