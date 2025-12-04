@@ -1,33 +1,37 @@
-# ---------- 1️⃣ Base image ----------
+# -------------------------------------------------
+# 1️⃣  Base image – tiny Alpine
+# -------------------------------------------------
 FROM alpine:latest
 
-# ---------- 2️⃣ Install Dante ----------
-#   -dante-server provides the `sockd` daemon
-#   -openssl is needed for the optional TLS variant (not used here)
+# -------------------------------------------------
+# 2️⃣  Install the Dante SOCKS5 server
+# -------------------------------------------------
 RUN apk add --no-cache dante-server
 
-# ---------- 3️⃣ Set default credentials ----------
-# These environment variables can be overridden in Render’s “Environment” UI.
-ENV SOCKS_USER   user
-ENV SOCKS_PASS   password
+# -------------------------------------------------
+# 3️⃣  Default credentials (can be overridden in Render)
+# -------------------------------------------------
+ENV SOCKS_USER=user
+ENV SOCKS_PASS=password
 
-# ---------- 4️⃣ Create a small Dante config file ----------
-# The config uses the $PORT variable that Render injects at runtime.
-# It also reads the username/password from the env vars above.
+# -------------------------------------------------
+# 4️⃣  Write the Dante configuration file
+# -------------------------------------------------
 RUN mkdir -p /etc/dante && \
-cat > /etc/dante/sockd.conf <><>'EOF'
+    cat > /etc/dante/sockd.conf <><>'EOF'
 logoutput: stderr
-internal: 0.0.0.0 port = ${PORT:-1080}
+internal: 0.0.0.0 port = $$PORT   # Render injects PORT at runtime; $$ escapes it for build time
 external: eth0
 
-# Only allow connections from anywhere (you can lock this down later)
-method: username
-user.privileged: root
+# allow any client to connect (you can tighten this later)
 client pass {
     from: 0.0.0.0/0 to: 0.0.0.0/0
     log: connect disconnect error
 }
-# Authentication rule – check username/password against the ones below
+
+# -------------------------------------------------
+# Authentication rule – username / password
+# -------------------------------------------------
 pass {
     from: 0.0.0.0/0 to: 0.0.0.0/0
     protocol: tcp udp
@@ -37,9 +41,12 @@ pass {
 }
 EOF
 
-# ---------- 5️⃣ Expose the (default) port ----------
+# -------------------------------------------------
+# 5️⃣  Expose the (default) port – just for readability
+# -------------------------------------------------
 EXPOSE 1080
 
-# ---------- 6️⃣ Start the daemon ----------
-# `sockd -D` runs it in the foreground (required on Render)
+# -------------------------------------------------
+# 6️⃣  Start Dante in the foreground (required on Render)
+# -------------------------------------------------
 CMD ["sockd", "-D"]
