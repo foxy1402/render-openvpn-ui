@@ -17,23 +17,23 @@ ENV SOCKS_PASS=password
 # -------------------------------------------------
 # 4️⃣  Write the Dante configuration file
 # -------------------------------------------------
-# All the lines between <><>'EOF' and EOF belong to the same RUN
-# command, so Docker does NOT try to parse them as instructions.
+# All lines from the first EOF up to the matching EOF belong to the same RUN.
 RUN mkdir -p /etc/dante && \
-    cat <><>'EOF' > /etc/dante/sockd.conf && \
+    cat > /etc/dante/sockd.conf <><>'EOF'
 logoutput: stderr
-internal: 0.0.0.0 port = 1080          # Render will map its $PORT to this value
+# Render will set the environment variable PORT at start‑up.
+# Using $PORT (not $$PORT) because the file is written at build‑time,
+# but the variable will be expanded when the container *runs*.
+internal: 0.0.0.0 port = $PORT
 external: eth0
 
-# Allow any client to connect – you can tighten this later
+# Allow any client to connect – you can tighten this later.
 client pass {
     from: 0.0.0.0/0 to: 0.0.0.0/0
     log: connect disconnect error
 }
 
-# -------------------------------------------------
-# Authentication – username / password
-# -------------------------------------------------
+# ---------- Authentication (username / password) ----------
 pass {
     from: 0.0.0.0/0 to: 0.0.0.0/0
     protocol: tcp udp
@@ -44,7 +44,7 @@ pass {
 EOF
 
 # -------------------------------------------------
-# 5️⃣  Expose the port (for readability; Render now uses $PORT)
+# 5️⃣  Expose the default SOCKS5 port (for readability)
 # -------------------------------------------------
 EXPOSE 1080
 
