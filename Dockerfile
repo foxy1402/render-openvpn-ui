@@ -1,8 +1,8 @@
 FROM schors/tgdante2:latest
 
-RUN apk add --no-cache netcat-openbsd
+RUN apk add --no-cache netcat-openbsd bash
 
 COPY health-server.sh /health-server.sh
 RUN chmod +x /health-server.sh
 
-EXPOSE 8080
+CMD ["/bin/sh", "-c", "/health-server.sh & tgdante2 -l 0.0.0.0:1080"]
